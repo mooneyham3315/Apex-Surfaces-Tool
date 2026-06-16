@@ -524,6 +524,13 @@ To ensure safety and optimal results, the Client agrees to complete the followin
         downloadBtn.addEventListener('click', function () {
             const preview = document.getElementById('invoicePreview');
             if (!preview) return;
+
+            // --- Make preview fully visible for PDF ---
+            const originalMaxHeight = preview.style.maxHeight;
+            const originalOverflow = preview.style.overflow;
+            preview.style.maxHeight = 'none';
+            preview.style.overflow = 'visible';
+
             html2canvas(preview, { scale: 2 }).then(canvas => {
                 const imgData = canvas.toDataURL('image/png');
                 const pdf = new window.jspdf.jsPDF({
@@ -535,8 +542,16 @@ To ensure safety and optimal results, the Client agrees to complete the followin
                 const imgWidth = pageWidth - 40;
                 const imgHeight = canvas.height * (imgWidth / canvas.width);
                 pdf.addImage(imgData, 'PNG', 20, 20, imgWidth, imgHeight);
-                const fileName = `Apex-${new Date().toISOString().slice(0, 10)}.pdf`;
+
+                const customerName = document.getElementById('custName')?.value || 'Client';
+                const safeName = customerName.trim().replace(/\s+/g, '-').replace(/[^a-zA-Z0-9\-]/g, '');
+                const todayStr = new Date().toISOString().slice(0, 10);
+                const fileName = `Apex-${safeName}-${todayStr}.pdf`;
                 pdf.save(fileName);
+
+                // --- Restore preview style ---
+                preview.style.maxHeight = originalMaxHeight;
+                preview.style.overflow = originalOverflow;
             });
         });
     }
