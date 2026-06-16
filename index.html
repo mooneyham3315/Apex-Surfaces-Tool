@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pressure Washing Estimate Tool</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <!-- Content will go here -->
+    <div class="header">
+        <img id="logoPreview"
+            style="max-width:60px; max-height:60px; vertical-align:middle; margin-right:12px; display:none;">
+        <span id="headerCompanyName">Apex Surfaces Estimates & Invoices</span>
+    </div>
+
+    <form id="companyForm">
+        <h2>Company Information</h2>
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <label style="margin-bottom: 0;">
+                Company Name:
+                <input type="text" id="compName" required>
+            </label>
+            <img id="logoPreview" style="max-width:60px; max-height:60px; display:none;">
+        </div>
+        <br>
+        <label>
+            Phone:
+            <input type="text" id="compPhone" required>
+        </label><br>
+        <label>
+            Email:
+            <input type="email" id="compEmail">
+        </label><br>
+        <label>
+            Upload Logo:
+            <input type="file" id="compLogo" accept="image/*">
+        </label><br>
+        <br>
+        <button type="submit">Save Company Info</button>
+    </form>
+
+    <label>
+        Select Previous Customer:
+        <input type="text" id="customerSearch" placeholder="Search customers..."><br>
+        <select id="customerSelect">
+            <option value="">-- New Customer --</option>
+        </select>
+    </label><br>
+
+    <form id="customerForm">
+        <h2>Customer Information</h2>
+        <label>
+            Customer Name:
+            <input type="text" id="custName" required>
+        </label><br>
+        <label>
+            Phone:
+            <input type="text" id="custPhone" required>
+        </label><br>
+        <label>
+            <label>
+                Email:
+                <input type="email" id="custEmail">
+            </label><br>
+            <button type="submit">Save Customer Info</button>
+    </form>
+
+    <form id="manageDiscountForm">
+        <h2>Manage Discounts</h2>
+        <label>
+            Discount Name:
+            <input type="text" id="discountName" required>
+        </label>
+        <label>
+            Type:
+            <select id="discountType" required>
+                <option value="percent">% Off</option>
+                <option value="dollar">$ Off</option>
+            </select>
+        </label>
+        <label>
+            Value:
+            <input type="number" id="discountValue" required min="0" step="0.01">
+        </label>
+        <button type="submit">Add Discount</button>
+    </form>
+
+    <ul id="discountList"></ul>
+
+    <form id="manageServiceForm">
+        <h2>Manage Standard Services</h2>
+        <label>
+            Service Name:
+            <input type="text" id="stdServiceName" required>
+        </label>
+        <label>
+            Price per Sq. Ft.:
+            <input type="number" id="stdServicePrice" required step="0.01" min="0">
+        </label>
+        <button type="submit">Add Service Type</button>
+    </form>
+
+    <ul id="stdServiceList"></ul>
+
+    <form id="serviceForm">
+        <h2>Add Service to Invoice</h2>
+        <label>
+            Service:
+            <select id="serviceDropdown" required>
+                <option value="">Select a service</option>
+                <!-- Options will be filled by JS -->
+            </select>
+        </label><br>
+        <label>
+            Area (sq ft):
+            <input type="number" id="serviceArea" required step="0.01" min="0">
+        </label><br>
+        <label>
+            Price per Sq. Ft.:
+            <input type="number" id="servicePricePer" required step="0.01" min="0">
+        </label><br>
+        <label>
+            Total:
+            <input type="text" id="serviceTotal" readonly>
+        </label><br>
+        <button type="submit">Add Service</button>
+    </form>
+
+    <ul id="serviceList"></ul>
+
+    <h2>Apply Discounts</h2>
+    <form id="applyDiscountsForm">
+        <input type="text" id="discountSearch" placeholder="Search discounts..."><br>
+        <div id="availableDiscounts">
+            <!-- Discount checkboxes will be added by JS -->
+        </div>
+    </form>
+    <div>
+        <strong>Total After Discounts:</strong>
+        <span id="finalTotal">$0.00</span>
+    </div>
+
+    <h2>Invoice/Estimate Preview</h2>
+    <div id="invoicePreview"
+        style="border:1px solid #ccc; padding:16px; background:#fff; max-width:600px; margin:0 auto;">
+        <!-- Preview content will be injected here by JS -->
+    </div>
+
+    <label>
+        Payment Due Date:
+        <input type="date" id="dueDate">
+
+    </label>
+    <button id="generatePreview">Generate Preview</button>
+    <button id="downloadPDF">Download as PDF</button>
+
+    <label>
+        <label>
+            Notes:<br>
+            <textarea id="notes" rows="3" style="width:100%;"
+                placeholder="Add any special instructions here..."></textarea>
+        </label>
+
+        Job Type:
+        <select id="jobType">
+            <option value="Residential">Residential</option>
+            <option value="Commercial">Commercial</option>
+        </select>
+    </label>
+
+    <label>
+        Type:
+        <select id="docType">
+            <option value="Estimate">Estimate</option>
+            <option value="Invoice">Invoice</option>
+        </select>
+    </label>
+
+    <script src="app.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+</body>
+
+</html>

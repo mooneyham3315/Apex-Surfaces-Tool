@@ -1,0 +1,22 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f3f6fa;
+    padding-bottom: 40px;
+}
+
+.header {
+    background: #4eae34;
+    color: #fff;
+    padding: 16px;
+    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.header img {
+    max-width: 60px;
+    max-height: 60px;
+    margin-right: 12px;
+}
