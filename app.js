@@ -447,6 +447,10 @@ To ensure safety and optimal results, the Client agrees to complete the followin
         const customerName = document.getElementById('custName')?.value || '';
         const docType = document.getElementById('docType')?.value || 'Estimate';
         const dateVal = new Date().toLocaleDateString();
+        const dueDateValue = document.getElementById('dueDate')?.value;
+        const dueDateHtml = dueDateValue
+            ? `<div><strong>Due Date:</strong> ${dueDateValue}</div>`
+            : '';
 
         // Build logo/company info
         const logoHtml = companyInfo.logoSrc
@@ -463,12 +467,40 @@ To ensure safety and optimal results, the Client agrees to complete the followin
                 return `<tr><td>${service.desc}</td><td>${service.quantity || 1} units</td><td>$${(service.setPrice ?? 0).toFixed(2)}</td><td>$${(service.total ?? 0).toFixed(2)}</td></tr>`;
             }
         }).join('');
+        // Subtotal (all services)
+        const subtotal = services.reduce((sum, s) => sum + (s.total || 0), 0);
 
-        const grandTotal = services.reduce((sum, s) => sum + (s.total || 0), 0);
+        // Discounts (checked in UI, like before)
+        const discounts = JSON.parse(localStorage.getItem('discounts') || '[]');
+        const checkedDiscountCheckboxes = document.querySelectorAll('.discountCheckbox:checked');
+        const appliedDiscounts = Array.from(checkedDiscountCheckboxes).map(cb => discounts[parseInt(cb.value)]);
+
+        // Apply discounts step by step
+        let runningTotal = subtotal; // This will become your final total
+        let discountLines = [];
+        appliedDiscounts.filter(d => d.type === 'percent').forEach(d => {
+            const amt = runningTotal * (d.value / 100);
+            runningTotal -= amt;
+            discountLines.push(`<tr><td>${d.name} (${d.value}% off)</td><td style="text-align:right;">-$${amt.toFixed(2)}</td></tr>`);
+        });
+        appliedDiscounts.filter(d => d.type === 'dollar').forEach(d => {
+            runningTotal -= d.value;
+            discountLines.push(`<tr><td>${d.name} ($${d.value.toFixed(2)} off)</td><td style="text-align:right;">-$${d.value.toFixed(2)}</td></tr>`);
+        });
+        const finalTotal = Math.max(0, runningTotal);
+
         const totalLineHtml = `
-    <div style="margin-top:12px; font-size:1.15em; text-align:right;">
-        <strong>Total: $${grandTotal.toFixed(2)}</strong>
-    </div>
+    <table style="width:100%;border-collapse:collapse;margin-top:16px;">
+      <tr>
+        <td style="text-align:left;"><strong>Subtotal</strong></td>
+        <td style="text-align:right;"><strong>$${subtotal.toFixed(2)}</strong></td>
+      </tr>
+      ${discountLines.join('')}
+      <tr>
+        <td style="text-align:left;"><strong>Total</strong></td>
+        <td style="text-align:right;"><strong>$${finalTotal.toFixed(2)}</strong></td>
+      </tr>
+    </table>
 `;
 
         // Use your existing universalTerms variable!
@@ -488,6 +520,7 @@ To ensure safety and optimal results, the Client agrees to complete the followin
         </div>
         <h3>${docType}</h3>
         <div><strong>Date:</strong> ${dateVal}</div>
+        ${dueDateHtml}
         <div><strong>Customer:</strong> ${customerName}</div>
         <table style="width:100%;border-collapse:collapse;margin-top:12px;">
             <tr>
