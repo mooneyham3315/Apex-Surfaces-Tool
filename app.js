@@ -49,7 +49,6 @@ window.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // --- Customer Info/Live Search ---
     function renderCustomerDropdown(customers) {
         const customerSelect = document.getElementById('customerSelect');
         if (!customerSelect) return;
@@ -67,9 +66,36 @@ window.addEventListener('DOMContentLoaded', function () {
             customerSelect.appendChild(option);
         });
     }
+
+    function renderCustomerList() {
+        const customers = JSON.parse(localStorage.getItem('customers') || '[]');
+        const customerList = document.getElementById('customerList');
+        if (!customerList) return;
+        customerList.innerHTML = '';
+        customers.forEach((customer, idx) => {
+            const li = document.createElement('li');
+            let label = `${customer.custName} (${customer.custPhone}${customer.custEmail ? ', ' + customer.custEmail : ''})`;
+            li.textContent = label;
+            // Remove button
+            const removeBtn = document.createElement('button');
+            removeBtn.textContent = 'Remove';
+            removeBtn.style.marginLeft = '10px';
+            removeBtn.onclick = function () {
+                customers.splice(idx, 1);
+                localStorage.setItem('customers', JSON.stringify(customers));
+                renderCustomerList();
+                renderCustomerDropdown(customers);
+            };
+            li.appendChild(removeBtn);
+            customerList.appendChild(li);
+        });
+    }
+
     function setupCustomerSearchAndDropdown() {
         let customers = JSON.parse(localStorage.getItem('customers') || '[]');
         renderCustomerDropdown(customers);
+        renderCustomerList();
+
         const searchInput = document.getElementById('customerSearch');
         const customerSelect = document.getElementById('customerSelect');
         if (!searchInput || !customerSelect) return;
@@ -98,7 +124,6 @@ window.addEventListener('DOMContentLoaded', function () {
     }
     setupCustomerSearchAndDropdown();
 
-    // --- Customer Save ---
     const customerForm = document.getElementById('customerForm');
     if (customerForm) {
         customerForm.addEventListener('submit', function (event) {
@@ -117,6 +142,7 @@ window.addEventListener('DOMContentLoaded', function () {
                 localStorage.setItem('customers', JSON.stringify(customers));
                 alert('Customer saved!');
                 renderCustomerDropdown(customers);
+                renderCustomerList();
             } else {
                 alert('This customer is already saved.');
             }
