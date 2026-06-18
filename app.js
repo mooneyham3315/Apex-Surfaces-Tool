@@ -156,21 +156,22 @@ window.addEventListener('DOMContentLoaded', function () {
     }
     renderDiscountList();
 
-    // --- Manage Standard Services ---
     const manageServiceForm = document.getElementById('manageServiceForm');
     if (manageServiceForm) {
         manageServiceForm.addEventListener('submit', function (event) {
             event.preventDefault();
             const name = document.getElementById('stdServiceName').value;
+            const setPrice = parseFloat(document.getElementById('stdServiceSetPrice').value) || 0;
             const price = parseFloat(document.getElementById('stdServicePrice').value) || 0;
             let stdServices = JSON.parse(localStorage.getItem('stdServices') || '[]');
-            stdServices.push({ name, price });
+            stdServices.push({ name, setPrice, price });
             localStorage.setItem('stdServices', JSON.stringify(stdServices));
             renderStdServiceList();
             manageServiceForm.reset();
             populateServiceDropdown();
         });
     }
+
     function renderStdServiceList() {
         const stdServices = JSON.parse(localStorage.getItem('stdServices') || '[]');
         const stdServiceList = document.getElementById('stdServiceList');
