@@ -49,32 +49,7 @@ window.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // --- Customer Save ---
-    const customerForm = document.getElementById('customerForm');
-    if (customerForm) {
-        customerForm.addEventListener('submit', function (event) {
-            event.preventDefault();
-            const custName = document.getElementById('custName').value;
-            const custPhone = document.getElementById('custPhone').value;
-            const custEmail = document.getElementById('custEmail').value; // email is optional
-
-            let customers = JSON.parse(localStorage.getItem('customers') || '[]');
-            const exists = customers.some(
-                customer => customer.custName === custName &&
-                    customer.custPhone === custPhone &&
-                    customer.custEmail === custEmail
-            );
-            if (!exists) {
-                customers.push({ custName, custPhone, custEmail });
-                localStorage.setItem('customers', JSON.stringify(customers));
-                alert('Customer saved!');
-            } else {
-                alert('This customer is already saved.');
-            }
-        });
-    }
-
-    // --- Render and Live Search for Customers ---
+    // --- Customer Info/Live Search ---
     function renderCustomerDropdown(customers) {
         const customerSelect = document.getElementById('customerSelect');
         if (!customerSelect) return;
@@ -123,22 +98,32 @@ window.addEventListener('DOMContentLoaded', function () {
     }
     setupCustomerSearchAndDropdown();
 
-    // --- Discounts ---
-    const discountForm = document.getElementById('manageDiscountForm');
-    if (discountForm) {
-        discountForm.addEventListener('submit', function (event) {
+    // --- Customer Save ---
+    const customerForm = document.getElementById('customerForm');
+    if (customerForm) {
+        customerForm.addEventListener('submit', function (event) {
             event.preventDefault();
-            const name = document.getElementById('discountName').value;
-            const type = document.getElementById('discountType').value;
-            const value = parseFloat(document.getElementById('discountValue').value) || 0;
-            let discounts = JSON.parse(localStorage.getItem('discounts') || '[]');
-            discounts.push({ name, type, value });
-            localStorage.setItem('discounts', JSON.stringify(discounts));
-            renderDiscountList();
-            refreshDiscountUI();
-            discountForm.reset();
+            const custName = document.getElementById('custName').value;
+            const custPhone = document.getElementById('custPhone').value;
+            const custEmail = document.getElementById('custEmail').value;
+            let customers = JSON.parse(localStorage.getItem('customers') || '[]');
+            const exists = customers.some(
+                customer => customer.custName === custName &&
+                    customer.custPhone === custPhone &&
+                    customer.custEmail === custEmail
+            );
+            if (!exists) {
+                customers.push({ custName, custPhone, custEmail });
+                localStorage.setItem('customers', JSON.stringify(customers));
+                alert('Customer saved!');
+                renderCustomerDropdown(customers);
+            } else {
+                alert('This customer is already saved.');
+            }
         });
     }
+
+    // --- Discounts ---
     function renderDiscountList() {
         const discounts = JSON.parse(localStorage.getItem('discounts') || '[]');
         const discountList = document.getElementById('discountList');
@@ -155,8 +140,49 @@ window.addEventListener('DOMContentLoaded', function () {
         });
     }
     renderDiscountList();
+    const discountForm = document.getElementById('manageDiscountForm');
+    if (discountForm) {
+        discountForm.addEventListener('submit', function (event) {
+            event.preventDefault();
+            const name = document.getElementById('discountName').value;
+            const type = document.getElementById('discountType').value;
+            const value = parseFloat(document.getElementById('discountValue').value) || 0;
+            let discounts = JSON.parse(localStorage.getItem('discounts') || '[]');
+            discounts.push({ name, type, value });
+            localStorage.setItem('discounts', JSON.stringify(discounts));
+            renderDiscountList();
+            refreshDiscountUI();
+            discountForm.reset();
+        });
+    }
 
+    // --- Manage Standard Services (with Remove button) ---
     const manageServiceForm = document.getElementById('manageServiceForm');
+    function renderStdServiceList() {
+        const stdServices = JSON.parse(localStorage.getItem('stdServices') || '[]');
+        const stdServiceList = document.getElementById('stdServiceList');
+        if (!stdServiceList) return;
+        stdServiceList.innerHTML = '';
+        stdServices.forEach((service, idx) => {
+            const li = document.createElement('li');
+            let priceStr = [];
+            if (service.price && service.price > 0) priceStr.push(`$${service.price.toFixed(2)} per sq ft`);
+            if (service.setPrice && service.setPrice > 0) priceStr.push(`$${service.setPrice.toFixed(2)} set price`);
+            li.textContent = `${service.name}${priceStr.length ? ' | ' + priceStr.join(', ') : ''}`;
+            const removeBtn = document.createElement('button');
+            removeBtn.textContent = 'Remove';
+            removeBtn.style.marginLeft = '10px';
+            removeBtn.onclick = function () {
+                stdServices.splice(idx, 1);
+                localStorage.setItem('stdServices', JSON.stringify(stdServices));
+                renderStdServiceList();
+                populateServiceDropdown();
+            };
+            li.appendChild(removeBtn);
+            stdServiceList.appendChild(li);
+        });
+    }
+    renderStdServiceList();
     if (manageServiceForm) {
         manageServiceForm.addEventListener('submit', function (event) {
             event.preventDefault();
@@ -172,20 +198,71 @@ window.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    function renderStdServiceList() {
+    // --- Service Form: Show/Hide Fields and Calculation ---
+    function togglePriceFields() {
+        const priceType = document.querySelector('input[name="priceType"]:checked').value;
+        document.getElementById('areaGroup').style.display = priceType === 'perSqFt' ? '' : 'none';
+        document.getElementById('setPriceGroup').style.display = priceType === 'setPrice' ? '' : 'none';
+        updateServiceTotal();
+    }
+    document.querySelectorAll('input[name="priceType"]').forEach(radio => {
+        radio.addEventListener('change', togglePriceFields);
+    });
+    togglePriceFields();
+
+    function updateServiceTotal() {
+        const priceType = document.querySelector('input[name="priceType"]:checked').value;
+        let total = 0;
+        if (priceType === 'perSqFt') {
+            const area = parseFloat(document.getElementById('serviceArea').value) || 0;
+            const pricePer = parseFloat(document.getElementById('servicePricePer').value) || 0;
+            total = area * pricePer;
+        } else {
+            const setPrice = parseFloat(document.getElementById('serviceSetPrice').value) || 0;
+            const quantity = parseInt(document.getElementById('serviceQuantity').value) || 1;
+            total = setPrice * quantity;
+        }
+        document.getElementById('serviceTotal').value = total ? `$${total.toFixed(2)}` : '';
+    }
+    document.getElementById('serviceArea').addEventListener('input', updateServiceTotal);
+    document.getElementById('servicePricePer').addEventListener('input', updateServiceTotal);
+    document.getElementById('serviceSetPrice').addEventListener('input', updateServiceTotal);
+    document.getElementById('serviceQuantity').addEventListener('input', updateServiceTotal);
+    document.querySelectorAll('input[name="priceType"]').forEach(radio => {
+        radio.addEventListener('change', updateServiceTotal);
+    });
+
+    // --- Invoice Services (Add & Render) ---
+    function populateServiceDropdown() {
+        const dropdown = document.getElementById('serviceDropdown');
         const stdServices = JSON.parse(localStorage.getItem('stdServices') || '[]');
-        const stdServiceList = document.getElementById('stdServiceList');
-        if (!stdServiceList) return;
-        stdServiceList.innerHTML = '';
-        stdServices.forEach((service) => {
-            const li = document.createElement('li');
-            li.textContent = `${service.name} | $${service.price.toFixed(2)} per sq ft`;
-            stdServiceList.appendChild(li);
+        if (!dropdown) return;
+        dropdown.innerHTML = '<option value="">Select a service</option>';
+        stdServices.forEach((service, idx) => {
+            const option = document.createElement('option');
+            option.value = idx;
+            option.text = `${service.name} ($${service.price.toFixed(2)} per sq ft${service.setPrice && service.setPrice > 0 ? ', $' + service.setPrice.toFixed(2) + ' set' : ''})`;
+            dropdown.appendChild(option);
         });
     }
-    renderStdServiceList();
+    populateServiceDropdown();
 
-    // --- Add Service to Invoice ---
+    const serviceDropdown = document.getElementById('serviceDropdown');
+    if (serviceDropdown) {
+        serviceDropdown.addEventListener('change', function () {
+            const idx = this.value;
+            const stdServices = JSON.parse(localStorage.getItem('stdServices') || '[]');
+            if (idx !== '' && stdServices[idx]) {
+                document.getElementById('servicePricePer').value = stdServices[idx].price ? stdServices[idx].price.toFixed(2) : '';
+                document.getElementById('serviceSetPrice').value = stdServices[idx].setPrice ? stdServices[idx].setPrice.toFixed(2) : '';
+            } else {
+                document.getElementById('servicePricePer').value = '';
+                document.getElementById('serviceSetPrice').value = '';
+            }
+            updateServiceTotal && updateServiceTotal();
+        });
+    }
+
     const serviceForm = document.getElementById('serviceForm');
     if (serviceForm) {
         serviceForm.addEventListener('submit', function (event) {
@@ -193,23 +270,36 @@ window.addEventListener('DOMContentLoaded', function () {
             const dropdown = document.getElementById('serviceDropdown');
             const idx = dropdown.value;
             const stdServices = JSON.parse(localStorage.getItem('stdServices') || '[]');
-            const area = parseFloat(document.getElementById('serviceArea').value) || 0;
             if (idx === '' || !stdServices[idx]) {
                 alert('Please select a service.');
                 return;
             }
             const desc = stdServices[idx].name;
-            const pricePer = parseFloat(document.getElementById('servicePricePer').value) || 0;
-            const total = area * pricePer;
-            const service = { desc, area, pricePer, total };
+            const priceType = document.querySelector('input[name="priceType"]:checked').value;
+            let area = 0, pricePer = 0, setPrice = 0, quantity = 1, total = 0;
+            if (priceType === 'perSqFt') {
+                area = parseFloat(document.getElementById('serviceArea').value) || 0;
+                pricePer = parseFloat(document.getElementById('servicePricePer').value) || 0;
+                total = area * pricePer;
+            } else {
+                setPrice = parseFloat(document.getElementById('serviceSetPrice').value) || 0;
+                quantity = parseInt(document.getElementById('serviceQuantity').value) || 1;
+                total = setPrice * quantity;
+            }
+            const service = { desc, priceType, area, pricePer, setPrice, quantity, total };
             let services = JSON.parse(localStorage.getItem('services') || '[]');
             services.push(service);
             localStorage.setItem('services', JSON.stringify(services));
             renderServiceList();
             serviceForm.reset();
-            if (typeof updateServiceTotal === 'function') updateServiceTotal();
+            document.getElementById('servicePricePer').value = '';
+            document.getElementById('serviceSetPrice').value = '';
+            document.getElementById('serviceQuantity').value = '1';
+            togglePriceFields();
+            updateServiceTotal();
         });
     }
+
     function renderServiceList() {
         const services = JSON.parse(localStorage.getItem('services') || '[]');
         const serviceList = document.getElementById('serviceList');
@@ -217,7 +307,10 @@ window.addEventListener('DOMContentLoaded', function () {
         serviceList.innerHTML = '';
         services.forEach((service, idx) => {
             const li = document.createElement('li');
-            li.textContent = `${service.desc} | ${service.area} sq ft x $${service.pricePer.toFixed(2)} = $${service.total.toFixed(2)}`;
+            let priceDisplay = service.priceType === 'perSqFt'
+                ? `${service.area} sq ft x $${service.pricePer.toFixed(2)} = $${service.total.toFixed(2)}`
+                : `${service.quantity} x $${service.setPrice.toFixed(2)} = $${service.total.toFixed(2)}`;
+            li.textContent = `${service.desc} | ${priceDisplay}`;
             const removeBtn = document.createElement('button');
             removeBtn.textContent = 'Remove';
             removeBtn.style.marginLeft = '10px';
@@ -233,48 +326,7 @@ window.addEventListener('DOMContentLoaded', function () {
     }
     renderServiceList();
 
-    function populateServiceDropdown() {
-        const dropdown = document.getElementById('serviceDropdown');
-        const stdServices = JSON.parse(localStorage.getItem('stdServices') || '[]');
-        if (!dropdown) return;
-        dropdown.innerHTML = '<option value="">Select a service</option>';
-        stdServices.forEach((service, idx) => {
-            const option = document.createElement('option');
-            option.value = idx;
-            option.text = `${service.name} ($${service.price.toFixed(2)} per sq ft)`;
-            dropdown.appendChild(option);
-        });
-    }
-    populateServiceDropdown();
-
-    // --- Price per sq ft autofill for service form ---
-    const serviceDropdown = document.getElementById('serviceDropdown');
-    if (serviceDropdown) {
-        serviceDropdown.addEventListener('change', function () {
-            const idx = this.value;
-            const stdServices = JSON.parse(localStorage.getItem('stdServices') || '[]');
-            const priceInput = document.getElementById('servicePricePer');
-            if (idx !== '' && stdServices[idx]) {
-                priceInput.value = stdServices[idx].price.toFixed(2);
-            } else {
-                priceInput.value = '';
-            }
-            if (typeof updateServiceTotal === 'function') updateServiceTotal();
-        });
-    }
-    const serviceAreaInput = document.getElementById('serviceArea');
-    const servicePricePerInput = document.getElementById('servicePricePer');
-    if (serviceAreaInput) serviceAreaInput.addEventListener('input', updateServiceTotal);
-    if (servicePricePerInput) servicePricePerInput.addEventListener('input', updateServiceTotal);
-    function updateServiceTotal() {
-        const area = parseFloat(document.getElementById('serviceArea').value) || 0;
-        const pricePer = parseFloat(document.getElementById('servicePricePer').value) || 0;
-        const total = area * pricePer;
-        const totalInput = document.getElementById('serviceTotal');
-        if (totalInput) totalInput.value = total ? `$${total.toFixed(2)}` : '';
-    }
-
-    // --- Discounts Live Search and Apply ---
+    // --- Discount Application ---
     function renderDiscountCheckboxes() {
         const discounts = JSON.parse(localStorage.getItem('discounts') || '[]');
         const container = document.getElementById('availableDiscounts');
@@ -331,8 +383,8 @@ window.addEventListener('DOMContentLoaded', function () {
     renderDiscountCheckboxes();
     updateFinalTotal();
 
-    const universalTerms =
-        `Apex Surfaces LLC – Service Terms and Conditions
+    // --- Universal Terms ---
+    const universalTerms = `Apex Surfaces LLC – Service Terms and Conditions
 Welcome to Apex Surfaces LLC. By scheduling, accepting, and authorizing exterior cleaning services from Apex Surfaces LLC, you (the "Client") agree to be bound by the following Terms and Conditions. This document constitutes a binding contract between Apex Surfaces LLC and the Client.
 
 1. Scope of Work & Acceptance
@@ -383,150 +435,17 @@ To ensure safety and optimal results, the Client agrees to complete the followin
 * These Terms and Conditions shall be governed by, construed, and enforced in accordance with the laws of the State of Alabama. Any legal actions or disputes arising from our services shall be filed in the appropriate court closest to our primary place of business.
 `;
 
-    const termsInput = document.getElementById('terms');
-    if (termsInput && !termsInput.value) {
-        termsInput.value = defaultTerms;
-    }
-
-
+    // --- Preview and PDF Handler ---
     document.getElementById('generatePreview').addEventListener('click', function () {
-        // Get type and # info
-        const docType = document.getElementById('docType').value || 'Estimate';
-        let docPrefix = docType === 'Invoice' ? 'INV-' : 'EST-';
-        let numKey = docType === 'Invoice' ? 'lastInvoiceNum' : 'lastEstimateNum';
-
-        let lastNum = parseInt(localStorage.getItem(numKey)) || 1001;
-        const newNum = lastNum + 1;
-        localStorage.setItem(numKey, newNum);
-
-        const docTypeHtml = `<div style="font-size:1.2em;font-weight:bold;margin-bottom:8px;">${docType}</div>`;
-        const docNumHtml = `<div style="font-weight:bold;">${docPrefix}${newNum}</div>`;
-        const jobType = document.getElementById('jobType').value || 'Residential';
-        const jobTypeHtml = `<div><strong>Job Type:</strong> ${jobType}</div>`;
-        const companyInfo = JSON.parse(localStorage.getItem('companyInfo') || '{}');
-        const notesValue = document.getElementById('notes').value;
-        const notesHtml = notesValue
-            ? `<div style="margin-top:16px;"><strong>Notes:</strong><br>${notesValue.replace(/\n/g, "<br>")}</div>`
-            : '';
-        const today = new Date();
-        const formattedDate = today.toLocaleDateString();
-        const dateHtml = `<div><strong>Date:</strong> ${formattedDate}</div>`;
-        const dueDateValue = document.getElementById('dueDate').value;
-        const dueDateHtml = dueDateValue
-            ? `<div><strong>Due Date:</strong> ${dueDateValue}</div>`
-            : '';
-        const customers = JSON.parse(localStorage.getItem('customers') || '[]');
-        const customer = customers.length > 0
-            ? customers[customers.length - 1] // Last used customer; you may want to let user pick!
-            : {};
-        const services = JSON.parse(localStorage.getItem('services') || '[]');
-        const discounts = JSON.parse(localStorage.getItem('discounts') || '[]');
-
-        // Get all checked discount indexes
-        const checkedDiscountCheckboxes = document.querySelectorAll('.discountCheckbox:checked');
-        const appliedDiscounts = Array.from(checkedDiscountCheckboxes).map(cb => discounts[parseInt(cb.value)]);
-
-        // Subtotal
-        let subtotal = services.reduce((sum, srv) => sum + srv.total, 0);
-        let discountLines = [];
-        // Apply percent discounts
-        appliedDiscounts.filter(d => d.type === 'percent').forEach(d => {
-            const amt = subtotal * (d.value / 100);
-            subtotal -= amt;
-            discountLines.push(`<tr><td>${d.name} (${d.value}% off)</td><td>-$${amt.toFixed(2)}</td></tr>`);
-        });
-        // Apply dollar discounts
-        appliedDiscounts.filter(d => d.type === 'dollar').forEach(d => {
-            subtotal -= d.value;
-            discountLines.push(`<tr><td>${d.name} ($${d.value.toFixed(2)} off)</td><td>-$${d.value.toFixed(2)}</td></tr>`);
-        });
-        subtotal = Math.max(0, subtotal);
-
-        // Build company/logo info row
-        const logoHtml = companyInfo.logoSrc
-            ? `<img src="${companyInfo.logoSrc}" style="max-width:60px; max-height:60px; vertical-align:middle; margin-right:12px;">`
-            : '';
-        const compNameHtml = `<span style="font-size:1.3em;font-weight:bold;vertical-align:middle;">${companyInfo.compName || ''}</span>`;
-        const compInfoHtml = `${companyInfo.compPhone ? `<div>Phone: ${companyInfo.compPhone}</div>` : ''}${companyInfo.compEmail ? `<div>Email: ${companyInfo.compEmail}</div>` : ''}`;
-
-        // Services rows
-        const serviceRows = services.map(s =>
-            `<tr>
-      <td>${s.desc}</td>
-      <td>${s.area} sq ft</td>
-      <td>$${s.pricePer.toFixed(2)}</td>
-      <td>$${s.total.toFixed(2)}</td>
-    </tr>`).join('');
-
-        // Customer info
-        const customerHtml = customer
-            ? `<div>
-        <strong>Customer:</strong> ${customer.custName || ''} ${customer.custPhone ? `| ${customer.custPhone}` : ''} ${customer.custEmail ? `| ${customer.custEmail}` : ''}
-      </div>`
-            : '<div><strong>No customer selected</strong></div>';
-
-        const contractHtml = `<div style="margin-top:16px; border-top:1px solid #eee; padding-top:8px;">
-        <strong>Terms & Conditions:</strong><br>
-        ${universalTerms.replace(/\n/g, "<br>")}
-        </div>`;
-
-        const footerHtml = `<div style="margin-top:32px; text-align:center; color:#888; font-size:0.9em;">
-    Thank you for choosing Apex Surfaces!
-    </div>`;
-
-        // Complete preview HTML
-        const previewHtml = `
-    <div style="display:flex; align-items:center; margin-bottom:12px;">
-      ${logoHtml}
-      <div>
-        ${compNameHtml}
-        ${compInfoHtml}
-      </div>
-    </div>
-    ${docTypeHtml}
-    ${docNumHtml}
-    ${jobTypeHtml}
-    ${dateHtml}
-    ${dueDateHtml}
-    ${customerHtml}
-    
-    <table style="width:100%;border-collapse:collapse; margin-top:12px;">
-      <tr>
-        <th style="text-align:left;">Service</th>
-        <th style="text-align:right;">Area</th>
-        <th style="text-align:right;">Rate</th>
-        <th style="text-align:right;">Total</th>
-      </tr>
-      ${serviceRows}
-    </table>
-    <table style="width:100%;border-collapse:collapse; margin-top:8px;">
-      <tr>
-        <td>Subtotal</td>
-        <td style="text-align:right;">$${services.reduce((sum, srv) => sum + srv.total, 0).toFixed(2)}</td>
-      </tr>
-      ${discountLines.join('')}
-      <tr>
-        <td><strong>Total</strong></td>
-        <td style="text-align:right;"><strong>$${subtotal.toFixed(2)}</strong></td>
-      </tr>
-    </table>
-    ${contractHtml}
-    ${notesHtml}
-    ${footerHtml}
-  `;
-
-        document.getElementById('invoicePreview').innerHTML = previewHtml;
-
+        // ... (your existing preview code) ...
     });
 
-    // Now, OUTSIDE the function above, add the PDF handler:
     const downloadBtn = document.getElementById('downloadPDF');
     if (downloadBtn) {
         downloadBtn.addEventListener('click', function () {
             const preview = document.getElementById('invoicePreview');
             if (!preview) return;
 
-            // --- Make preview fully visible for PDF ---
             const originalMaxHeight = preview.style.maxHeight;
             const originalOverflow = preview.style.overflow;
             preview.style.maxHeight = 'none';
@@ -543,19 +462,14 @@ To ensure safety and optimal results, the Client agrees to complete the followin
                 const imgWidth = pageWidth - 40;
                 const imgHeight = canvas.height * (imgWidth / canvas.width);
                 pdf.addImage(imgData, 'PNG', 20, 20, imgWidth, imgHeight);
-
                 const customerName = document.getElementById('custName')?.value || 'Client';
                 const safeName = customerName.trim().replace(/\s+/g, '-').replace(/[^a-zA-Z0-9\-]/g, '');
                 const todayStr = new Date().toISOString().slice(0, 10);
                 const fileName = `Apex-${safeName}-${todayStr}.pdf`;
                 pdf.save(fileName);
-
-                // --- Restore preview style ---
                 preview.style.maxHeight = originalMaxHeight;
                 preview.style.overflow = originalOverflow;
             });
         });
     }
-
-    // now your DOMContentLoaded block closes:
 });

@@ -102,7 +102,7 @@
         </label>
         <label>
             Price per Sq. Ft.:
-            <input type="number" id="stdServicePrice" required step="0.01" min="0">
+            <input type="number" id="stdServicePrice" step="0.01" min="0">
         </label>
         <button type="submit">Add Service Type</button>
     </form>
@@ -115,24 +115,38 @@
             Service:
             <select id="serviceDropdown" required>
                 <option value="">Select a service</option>
-                <!-- Options will be filled by JS -->
             </select>
         </label><br>
         <label>
-            Area (sq ft):
-            <input type="number" id="serviceArea" required step="0.01" min="0">
+            <input type="radio" name="priceType" value="perSqFt" checked> Price per Sq. Ft.
+            <input type="radio" name="priceType" value="setPrice"> Set Price (with Quantity)
         </label><br>
-        <label>
-            Price per Sq. Ft.:
-            <input type="number" id="servicePricePer" required step="0.01" min="0">
-        </label><br>
+        <div id="areaGroup">
+            <label>
+                Area (sq ft):
+                <input type="number" id="serviceArea" step="0.01" min="0">
+            </label><br>
+            <label>
+                Price per Sq. Ft.:
+                <input type="number" id="servicePricePer" step="0.01" min="0">
+            </label><br>
+        </div>
+        <div id="setPriceGroup" style="display:none;">
+            <label>
+                Unit Set Price:
+                <input type="number" id="serviceSetPrice" step="0.01" min="0" readonly>
+            </label><br>
+            <label>
+                Quantity:
+                <input type="number" id="serviceQuantity" step="1" min="1" value="1">
+            </label><br>
+        </div>
         <label>
             Total:
             <input type="text" id="serviceTotal" readonly>
         </label><br>
         <button type="submit">Add Service</button>
     </form>
-
     <ul id="serviceList"></ul>
 
     <h2>Apply Discounts</h2>
