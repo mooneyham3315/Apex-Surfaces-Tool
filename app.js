@@ -307,9 +307,14 @@ window.addEventListener('DOMContentLoaded', function () {
         serviceList.innerHTML = '';
         services.forEach((service, idx) => {
             const li = document.createElement('li');
-            let priceDisplay = service.priceType === 'perSqFt'
-                ? `${service.area} sq ft x $${service.pricePer.toFixed(2)} = $${service.total.toFixed(2)}`
-                : `${service.quantity} x $${service.setPrice.toFixed(2)} = $${service.total.toFixed(2)}`;
+            let priceDisplay;
+            if (service.priceType === 'perSqFt') {
+                priceDisplay = `${service.area} sq ft x $${(service.pricePer || 0).toFixed(2)} = $${(service.total || 0).toFixed(2)}`;
+            } else {
+                const qty = service.quantity !== undefined ? service.quantity : 1;
+                const setPrice = service.setPrice !== undefined ? service.setPrice : 0;
+                priceDisplay = `${qty} x $${setPrice.toFixed(2)} = $${(service.total || 0).toFixed(2)}`;
+            }
             li.textContent = `${service.desc} | ${priceDisplay}`;
             const removeBtn = document.createElement('button');
             removeBtn.textContent = 'Remove';
