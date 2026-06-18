@@ -440,9 +440,66 @@ To ensure safety and optimal results, the Client agrees to complete the followin
 * These Terms and Conditions shall be governed by, construed, and enforced in accordance with the laws of the State of Alabama. Any legal actions or disputes arising from our services shall be filed in the appropriate court closest to our primary place of business.
 `;
 
-    // --- Preview and PDF Handler ---
     document.getElementById('generatePreview').addEventListener('click', function () {
-        // ... (your existing preview code) ...
+        // Get info
+        const companyInfo = JSON.parse(localStorage.getItem('companyInfo') || '{}');
+        const services = JSON.parse(localStorage.getItem('services') || '[]');
+        const customerName = document.getElementById('custName')?.value || '';
+        const docType = document.getElementById('docType')?.value || 'Estimate';
+        const dateVal = new Date().toLocaleDateString();
+
+        // Build logo/company info
+        const logoHtml = companyInfo.logoSrc
+            ? `<img src="${companyInfo.logoSrc}" style="max-width:60px; max-height:60px; vertical-align:middle; margin-right:12px;">`
+            : '';
+        const compNameHtml = `<span style="font-size:1.3em;font-weight:bold;vertical-align:middle;">${companyInfo.compName || ''}</span><br>`;
+        const compInfoHtml = `${companyInfo.compPhone ? companyInfo.compPhone : ''}${companyInfo.compEmail ? ' | ' + companyInfo.compEmail : ''}`;
+
+        // Build service rows
+        const serviceRows = services.map(service => {
+            if (service.priceType === 'perSqFt') {
+                return `<tr><td>${service.desc}</td><td>${service.area} sq ft</td><td>$${(service.pricePer ?? 0).toFixed(2)}</td><td>$${(service.total ?? 0).toFixed(2)}</td></tr>`;
+            } else {
+                return `<tr><td>${service.desc}</td><td>${service.quantity || 1} units</td><td>$${(service.setPrice ?? 0).toFixed(2)}</td><td>$${(service.total ?? 0).toFixed(2)}</td></tr>`;
+            }
+        }).join('');
+
+        const grandTotal = services.reduce((sum, s) => sum + (s.total || 0), 0);
+        const totalLineHtml = `
+    <div style="margin-top:12px; font-size:1.15em; text-align:right;">
+        <strong>Total: $${grandTotal.toFixed(2)}</strong>
+    </div>
+`;
+
+        // Use your existing universalTerms variable!
+        const contractHtml = `<div style="margin-top:20px; border-top:1px solid #ddd; padding-top:12px;">
+        <strong>Terms & Conditions:</strong><br>
+        ${universalTerms.replace(/\n/g, "<br>")}
+    </div>`;
+
+        // Final preview HTML
+        const previewHtml = `
+        <div style="display:flex; align-items:center; margin-bottom:16px;">
+            ${logoHtml}
+            <div>
+                ${compNameHtml}
+                ${compInfoHtml}
+            </div>
+        </div>
+        <h3>${docType}</h3>
+        <div><strong>Date:</strong> ${dateVal}</div>
+        <div><strong>Customer:</strong> ${customerName}</div>
+        <table style="width:100%;border-collapse:collapse;margin-top:12px;">
+            <tr>
+                <th>Service</th><th>Qty/Area</th><th>Rate</th><th>Total</th>
+            </tr>
+            ${serviceRows}
+        </table>
+        ${totalLineHtml}
+        ${contractHtml}
+    `;
+
+        document.getElementById('invoicePreview').innerHTML = previewHtml;
     });
 
     const downloadBtn = document.getElementById('downloadPDF');
