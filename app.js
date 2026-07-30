@@ -67,6 +67,16 @@ window.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    const toggleBtn = document.getElementById('toggleCustomerList');
+    const customerList = document.getElementById('customerList');
+    let listVisible = false;
+
+    toggleBtn.addEventListener('click', function () {
+        listVisible = !listVisible;
+        customerList.style.display = listVisible ? '' : 'none';
+        toggleBtn.textContent = listVisible ? 'Hide Customer List' : 'Show Customer List';
+    });
+
     function renderCustomerList() {
         const customers = JSON.parse(localStorage.getItem('customers') || '[]');
         const customerList = document.getElementById('customerList');
@@ -594,18 +604,36 @@ To ensure safety and optimal results, the Client agrees to complete the followin
                     unit: 'pt',
                     format: 'a4'
                 });
+
                 const pageWidth = pdf.internal.pageSize.getWidth();
-                const imgWidth = pageWidth - 40;
+                const pageHeight = pdf.internal.pageSize.getHeight();
+                const imgWidth = pageWidth - 40; // leave margin
                 const imgHeight = canvas.height * (imgWidth / canvas.width);
-                pdf.addImage(imgData, 'PNG', 20, 20, imgWidth, imgHeight);
+
+                let heightLeft = imgHeight;
+                let position = 20;
+
+                pdf.addImage(imgData, 'PNG', 20, position, imgWidth, imgHeight);
+
+                heightLeft -= (pageHeight - 40);
+
+                // While there is still PDF height left to render
+                while (heightLeft > 0) {
+                    pdf.addPage();
+                    position = heightLeft * -1 + 20;
+                    pdf.addImage(imgData, 'PNG', 20, position, imgWidth, imgHeight);
+                    heightLeft -= (pageHeight - 40);
+                }
+
                 const customerName = document.getElementById('custName')?.value || 'Client';
                 const safeName = customerName.trim().replace(/\s+/g, '-').replace(/[^a-zA-Z0-9\-]/g, '');
                 const todayStr = new Date().toISOString().slice(0, 10);
                 const fileName = `Apex-${safeName}-${todayStr}.pdf`;
                 pdf.save(fileName);
+
                 preview.style.maxHeight = originalMaxHeight;
                 preview.style.overflow = originalOverflow;
             });
         });
     }
-});
+})
