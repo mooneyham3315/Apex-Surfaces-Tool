@@ -76,21 +76,36 @@ window.addEventListener('DOMContentLoaded', function () {
             const li = document.createElement('li');
             let label = `${customer.custName} (${customer.custPhone}${customer.custEmail ? ', ' + customer.custEmail : ''})`;
             li.textContent = label;
+
+            // Edit button
+            const editBtn = document.createElement('button');
+            editBtn.textContent = 'Edit';
+            editBtn.style.marginLeft = '10px';
+            editBtn.onclick = function () {
+                document.getElementById('custName').value = customer.custName;
+                document.getElementById('custPhone').value = customer.custPhone;
+                document.getElementById('custEmail').value = customer.custEmail || '';
+                // Optionally, highlight or scroll to the form
+            };
+
             // Remove button
             const removeBtn = document.createElement('button');
             removeBtn.textContent = 'Remove';
             removeBtn.style.marginLeft = '10px';
             removeBtn.onclick = function () {
-                customers.splice(idx, 1);
-                localStorage.setItem('customers', JSON.stringify(customers));
-                renderCustomerList();
-                renderCustomerDropdown(customers);
+                if (confirm('Are you sure you want to delete this customer?')) {
+                    customers.splice(idx, 1);
+                    localStorage.setItem('customers', JSON.stringify(customers));
+                    renderCustomerList();
+                    renderCustomerDropdown(customers);
+                }
             };
+
+            li.appendChild(editBtn);
             li.appendChild(removeBtn);
             customerList.appendChild(li);
         });
     }
-
     function setupCustomerSearchAndDropdown() {
         let customers = JSON.parse(localStorage.getItem('customers') || '[]');
         renderCustomerDropdown(customers);
