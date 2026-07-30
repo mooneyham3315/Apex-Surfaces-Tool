@@ -20,3 +20,106 @@ body {
     max-height: 60px;
     margin-right: 12px;
 }
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    background: #f3f6fa;
+}
+
+.header {
+    background: #4eae34;
+    color: #fff;
+    padding: 14px;
+    font-size: 1.1em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+form,
+.header,
+#invoicePreview {
+    max-width: 98vw;
+    width: 100%;
+    box-sizing: border-box;
+    margin: 12px auto 0 auto;
+    border-radius: 10px;
+}
+
+form {
+    background: #fff;
+    padding: 12px;
+    box-shadow: 0 2px 8px #0001;
+    margin-bottom: 12px;
+}
+
+label,
+input,
+select,
+textarea,
+button {
+    font-size: 1.05em;
+}
+
+label {
+    display: block;
+    margin-bottom: 7px;
+    font-weight: 500;
+}
+
+input,
+select,
+textarea {
+    width: 100%;
+    padding: 8px;
+    margin-top: 3px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    border: 1px solid #b5b5b5;
+    box-sizing: border-box;
+}
+
+button {
+    width: 100%;
+    background: #4eae34;
+    color: #fff;
+    border: none;
+    margin: 7px 0 0 0;
+    border-radius: 5px;
+    font-size: 1.1em;
+    padding: 12px 0;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+button:active {
+    background: #378c24;
+}
+
+#invoicePreview {
+    padding: 14px;
+    margin-bottom: 16px;
+    background: #fff;
+    overflow-x: auto;
+}
+
+ul {
+    padding-left: 20px;
+    margin-bottom: 10px;
+}
+
+li {
+    margin: 7px 0;
+    word-wrap: anywhere;
+}
+
+@media (min-width: 700px) {
+
+    form,
+    #invoicePreview,
+    .header {
+        max-width: 600px;
+    }
+}
